@@ -48,8 +48,6 @@ Mouseless is a C++ project that provides an overlay for keyboard-based mouse con
   - To release/drop, enter a click-coordinate as normal.
   - To drag to a point (without releasing/dropping), hold the `Shift` key on the final press again.
 
-- To simply **move the mouse cursor**, hold `Ctrl` during the final keypress of a mouse action.
-
 ### Multiple Monitors (Under Development)
  
 - To **move the overlay between monitors**, tap the `PageUp` or `PageDown` keys while the overlay is visible.
