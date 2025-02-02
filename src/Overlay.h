@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
 
 class Overlay
 {

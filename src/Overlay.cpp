@@ -1,7 +1,6 @@
 #include "Overlay.h"
 #include <dwmapi.h>
 #include <iostream>
-#pragma comment(lib, "dwmapi.lib")
 
 // Static member initialization
 const std::vector<std::string> Overlay::KEYBOARD_ROWS = {
@@ -31,13 +30,20 @@ int Overlay::clickCount = 0;
 bool Overlay::Initialize()
 {
     // Register window class
-    WNDCLASSEXW wc = {0};
-    wc.cbSize = sizeof(WNDCLASSEX);
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = GetModuleHandle(NULL);
-    wc.lpszClassName = L"MouselessOverlay";
-    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH); // Ensure background is black
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    WNDCLASSEXW wc = {
+        sizeof(WNDCLASSEXW),                 // cbSize
+        CS_HREDRAW | CS_VREDRAW,             // style
+        WndProc,                             // lpfnWndProc
+        0,                                   // cbClsExtra
+        0,                                   // cbWndExtra
+        GetModuleHandle(NULL),               // hInstance
+        LoadIcon(NULL, IDI_APPLICATION),     // hIcon
+        LoadCursor(NULL, IDC_ARROW),         // hCursor
+        (HBRUSH)GetStockObject(BLACK_BRUSH), // hbrBackground
+        NULL,                                // lpszMenuName
+        L"MouselessOverlay",                 // lpszClassName
+        LoadIcon(NULL, IDI_APPLICATION)      // hIconSm
+    };
 
     if (!RegisterClassExW(&wc))
     {
@@ -49,12 +55,13 @@ bool Overlay::Initialize()
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     hwnd = CreateWindowExW(
-        WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT,
+        WS_EX_TOPMOST | WS_EX_LAYERED ,
         L"MouselessOverlay",
         L"Mouseless",
         WS_POPUP,
         0, 0, screenWidth, screenHeight,
-        NULL, NULL, GetModuleHandle(NULL), NULL);
+        NULL, // Set the shell as parent.
+        NULL, GetModuleHandle(NULL), NULL);
 
     if (!hwnd)
     {
@@ -63,6 +70,7 @@ bool Overlay::Initialize()
 
     // Modified transparency setup
     SetLayeredWindowAttributes(hwnd, 0, 200, LWA_ALPHA);
+    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, screenWidth, screenHeight, SWP_SHOWWINDOW);
 
     // Create fonts
     gridFont = CreateFontW(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
@@ -80,6 +88,8 @@ bool Overlay::Initialize()
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
+
+    SetTimer(hwnd, 2, 500, NULL); // Every 500ms, reassert topmost
 
     return true;
 }
@@ -158,41 +168,6 @@ LRESULT CALLBACK Overlay::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
 }
 
-// LRESULT CALLBACK Overlay::KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
-// {
-//     if (nCode == HC_ACTION)
-//     {
-//         KBDLLHOOKSTRUCT *p = (KBDLLHOOKSTRUCT *)lParam;
-//         bool isAltPressed = ((GetAsyncKeyState(VK_LMENU) & 0x8000) != 0) ||
-//         ((GetAsyncKeyState(VK_RMENU) & 0x8000) != 0);
-//         std::cout << "Key pressed: " << p->vkCode << std::endl;
-//         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
-//         {
-//             std::cout << "Is alt pressed: " << isAltPressed << std::endl;
-//             if (p->vkCode == TOGGLE_KEY && isAltPressed)
-//             {
-//                 std::cout << "Toggle key pressed" << std::endl;
-//                 ToggleVisibility();
-//                 return 1;
-//             }
-
-//             if (isVisible)
-//             {
-//                 char key = MapVirtualKey(p->vkCode, MAPVK_VK_TO_CHAR);
-//                 ProcessKeyPress(key, isAltPressed);
-//                 return 1;
-//             }
-//         }
-//         else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP)
-//         {
-//             if (p->vkCode == VK_MENU)
-//             {
-//                 keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
-//             }
-//         }
-//     }
-//     return CallNextHookEx(NULL, nCode, wParam, lParam);
-// }
 static bool isShiftPressed = false;
 LRESULT CALLBACK Overlay::KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -293,12 +268,14 @@ void Overlay::DrawKeyboardLayout(HDC hdc, int centerX, int centerY)
     int keyWidth = rectWidth / maxKeysInRow;
     int keyHeight = rectHeight / KEYBOARD_ROWS.size();
 
-    for (int row = 0; row < KEYBOARD_ROWS.size(); row++)
+    int totalRows = static_cast<int>(KEYBOARD_ROWS.size());
+    for (int row = 0; row < totalRows; row++)
     {
         std::string keys = KEYBOARD_ROWS[row];
         int rowOffset = (maxKeysInRow - keys.length()) * keyWidth / 2;
+        int totalCols = static_cast<int>(keys.length());
 
-        for (int col = 0; col < keys.length(); col++)
+        for (int col = 0; col < totalCols; col++)
         {
             char key = keys[col];
             int x = startX + rowOffset + (col * keyWidth);
@@ -309,12 +286,6 @@ void Overlay::DrawKeyboardLayout(HDC hdc, int centerX, int centerY)
             RECT rect = {x, y, x + keyWidth, y + keyHeight};
             FillRect(hdc, &rect, hBrush);
             DeleteObject(hBrush);
-
-            // // Draw key border
-            // HPEN hPen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
-            // SelectObject(hdc, hPen);
-            // Rectangle(hdc, x, y, x + keyWidth, y + keyHeight);
-            // DeleteObject(hPen);
 
             // Draw key character
             SetTextColor(hdc, RGB(255, 255, 255));
@@ -385,7 +356,6 @@ void Overlay::PerformDragRelease(POINT releasePos)
 
     // Now release the button
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-
 }
 
 void Overlay::ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed)
@@ -407,18 +377,17 @@ void Overlay::ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed)
             {
                 if (pendingClickPos.x != 0 && pendingClickPos.y != 0)
                 {
-                    std::cout << "Performing drag operation" << std::endl;
                     PerformDragRelease(keyboardPositions[key]);
                     ToggleVisibility();
                 }
                 else
                 {
                     pendingClickPos = keyboardPositions[key];
-                    std::cout << "Pending click position: " << pendingClickPos.x << " " << pendingClickPos.y << std::endl;
-                    isShowingKeyboard = false;
                     SetCursorPos(pendingClickPos.x, pendingClickPos.y);
                     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                    UpdateWindow(hwnd);
+                    isShowingKeyboard = false;
+                    InvalidateRect(hwnd, NULL, TRUE); // Force redraw
+                    UpdateWindow(hwnd); // Force redraw
                 }
                 return;
             }

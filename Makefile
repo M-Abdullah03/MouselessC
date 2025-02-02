@@ -10,13 +10,13 @@ CXXFLAGS = -Wall -Wextra -std=c++17
 LIBS = -lgdi32 -luser32 -ldwmapi
 
 # Source files
-SRCS = main.cpp Overlay.cpp
+SRCS = ./src/main.cpp ./src/Overlay.cpp
 
 # Header files
-HDRS = Overlay.h
+HDRS = ./src/Overlay.h
 
 # Output executable
-TARGET = main
+TARGET = ./bin/Mouseless
 
 # Build target
 all: $(TARGET)
