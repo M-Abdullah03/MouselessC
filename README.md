@@ -12,7 +12,7 @@ Mouseless is a C++ project that provides an overlay for keyboard-based mouse con
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/mouseless.git
+   git clone https://github.com/M-Abdullah03/mouseless.git
    cd mouseless
    ```
 2. Build the project:
