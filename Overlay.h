@@ -23,7 +23,7 @@ private:
     static const UINT TOGGLE_MODIFIER;
     static UINT_PTR clickTimer;
     static POINT pendingClickPos;
-    static const UINT CLICK_DELAY = 500; // 1 second in milliseconds
+    static const UINT CLICK_DELAY_THRESHOLD = 300; // 1 second in milliseconds
     static int clickCount; // Track number of clicks
 
     // State variables

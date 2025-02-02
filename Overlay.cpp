@@ -442,7 +442,7 @@ void Overlay::ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed)
             {
                 KillTimer(hwnd, clickTimer);
             }
-            clickTimer = SetTimer(hwnd, 1, CLICK_DELAY, NULL);
+            clickTimer = SetTimer(hwnd, 1, CLICK_DELAY_THRESHOLD, NULL);
 
             // Don't hide overlay yet - wait for timer
             InvalidateRect(hwnd, NULL, TRUE);
