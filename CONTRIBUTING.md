@@ -6,11 +6,11 @@ Thank you for considering contributing to Mouseless! We welcome contributions fr
 
 ### Reporting Bugs
 
-If you find a bug, please report it by opening an issue on the [GitHub repository](https://github.com/yourusername/mouseless/issues). Include as much detail as possible to help us understand and reproduce the issue.
+If you find a bug, please report it by opening an issue on the [GitHub repository](https://github.com/M-Abdullah03/mouseless/issues). Include as much detail as possible to help us understand and reproduce the issue.
 
 ### Suggesting Features
 
-If you have an idea for a new feature, please open an issue on the [GitHub repository](https://github.com/yourusername/mouseless/issues) and describe your idea in detail. We appreciate your suggestions and feedback.
+If you have an idea for a new feature, please open an issue on the [GitHub repository](https://github.com/M-Abdullah03/mouseless/issues) and describe your idea in detail. We appreciate your suggestions and feedback.
 
 ### Submitting Pull Requests
 
@@ -57,9 +57,5 @@ If your changes include new functionality, please add tests to ensure that your 
 ### Documentation
 
 If your changes affect the usage or behavior of the project, please update the documentation accordingly. This includes the README.md file and any other relevant documentation files.
-
-### Code of Conduct
-
-Please be respectful and considerate when interacting with others in the community. We expect all contributors to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Thank you for your contributions!
