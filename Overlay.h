@@ -12,7 +12,8 @@ public:
     static bool Initialize();
     static void Shutdown();
     static void ToggleVisibility();
-    static void ProcessKeyPress(char key, bool isAltPressed);
+    static void ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed);
+    static void PerformDragRelease(POINT releasePos);
 
 private:
     static const std::vector<std::string> KEYBOARD_ROWS;

@@ -62,7 +62,7 @@ bool Overlay::Initialize()
     }
 
     // Modified transparency setup
-    SetLayeredWindowAttributes(hwnd, 0, 200, LWA_ALPHA); // Use only alpha for overlap
+    SetLayeredWindowAttributes(hwnd, 0, 200, LWA_ALPHA);
 
     // Create fonts
     gridFont = CreateFontW(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
@@ -193,13 +193,20 @@ LRESULT CALLBACK Overlay::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 //     }
 //     return CallNextHookEx(NULL, nCode, wParam, lParam);
 // }
+static bool isShiftPressed = false;
 LRESULT CALLBACK Overlay::KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode == HC_ACTION)
     {
         KBDLLHOOKSTRUCT *p = (KBDLLHOOKSTRUCT *)lParam;
         bool isAltPressed = (p->flags & LLKHF_ALTDOWN) != 0;
-
+        if (p->vkCode == VK_LSHIFT || p->vkCode == VK_RSHIFT)
+        {
+            if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+                isShiftPressed = true;
+            else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP)
+                isShiftPressed = false;
+        }
         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
         {
             if (p->vkCode == TOGGLE_KEY && isAltPressed)
@@ -211,7 +218,7 @@ LRESULT CALLBACK Overlay::KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
             if (isVisible)
             {
                 char key = MapVirtualKey(p->vkCode, MAPVK_VK_TO_CHAR);
-                ProcessKeyPress(key, isAltPressed);
+                ProcessKeyPress(key, isAltPressed, isShiftPressed);
                 return 1;
             }
         }
@@ -223,16 +230,10 @@ void Overlay::Draw(HDC hdc)
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    // Fill the entire window with black first:
-    // HBRUSH blackBrush = CreateSolidBrush(RGB(0, 0, 0));
-    // RECT fullRect = {0, 0, screenWidth, screenHeight};
-    // FillRect(hdc, &fullRect, blackBrush);
-    // DeleteObject(blackBrush);
     int cols = screenWidth / (SQUARE_SIZE * 3);
     int rows = screenHeight / (SQUARE_SIZE * 3);
     cols = cols % 2 == 0 ? cols : cols + 1;
     rows = rows % 2 == 0 ? rows : rows + 1;
-    std ::cout << "Cols: " << cols << " Rows: " << rows << std::endl;
     for (int row = 0; row < rows; row++)
     {
         for (int col = 0; col < cols; col += 2)
@@ -275,7 +276,6 @@ void Overlay::Draw(HDC hdc)
 
     if (isShowingKeyboard && !selectedPair.empty())
     {
-        std::cout << "Selected pair: " << selectedPair << std::endl;
         auto pos = pairPositions[selectedPair];
         DrawKeyboardLayout(hdc, (int)pos.first, (int)pos.second);
     }
@@ -347,6 +347,8 @@ void Overlay::ToggleVisibility()
     isVisible = !isVisible;
     isShowingKeyboard = false;
     selectedPair.clear();
+    lastKeyPressed = '\0';
+    pendingClickPos = {0, 0};
     if (isVisible)
     {
         ShowWindow(hwnd, SW_SHOW);
@@ -366,7 +368,27 @@ void Overlay::ToggleVisibility()
     keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
 }
 
-void Overlay::ProcessKeyPress(char key, bool isAltPressed)
+void Overlay::PerformDragRelease(POINT releasePos)
+{
+    POINT startPos;
+    GetCursorPos(&startPos);
+
+    // Move in small increments to simulate real dragging
+    int stepCount = 10; // Increase for smoother movement
+    for (int i = 1; i <= stepCount; i++)
+    {
+        int x = startPos.x + (i * (releasePos.x - startPos.x)) / stepCount;
+        int y = startPos.y + (i * (releasePos.y - startPos.y)) / stepCount;
+        SetCursorPos(x, y);
+        Sleep(5); // Small pause (remove or adjust as needed)
+    }
+
+    // Now release the button
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+}
+
+void Overlay::ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed)
 {
     if (isShowingKeyboard)
     {
@@ -381,6 +403,26 @@ void Overlay::ProcessKeyPress(char key, bool isAltPressed)
                 ToggleVisibility();
                 return;
             }
+            if (isShiftPressed)
+            {
+                if (pendingClickPos.x != 0 && pendingClickPos.y != 0)
+                {
+                    std::cout << "Performing drag operation" << std::endl;
+                    PerformDragRelease(keyboardPositions[key]);
+                    ToggleVisibility();
+                }
+                else
+                {
+                    pendingClickPos = keyboardPositions[key];
+                    std::cout << "Pending click position: " << pendingClickPos.x << " " << pendingClickPos.y << std::endl;
+                    isShowingKeyboard = false;
+                    SetCursorPos(pendingClickPos.x, pendingClickPos.y);
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                    UpdateWindow(hwnd);
+                }
+                return;
+            }
+
             // Check if there is a pending click
             if (pendingClickPos.x != 0 && pendingClickPos.y != 0)
             {
