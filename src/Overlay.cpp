@@ -55,22 +55,21 @@ bool Overlay::Initialize()
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     hwnd = CreateWindowExW(
-        WS_EX_TOPMOST | WS_EX_LAYERED ,
+        WS_EX_TOPMOST | WS_EX_LAYERED,
         L"MouselessOverlay",
         L"Mouseless",
         WS_POPUP,
         0, 0, screenWidth, screenHeight,
-        NULL, // Set the shell as parent.
-        NULL, GetModuleHandle(NULL), NULL);
+        NULL, NULL, GetModuleHandle(NULL), NULL);
 
     if (!hwnd)
     {
+        std::cout << "Failed to create window" << std::endl;
         return false;
     }
 
     // Modified transparency setup
     SetLayeredWindowAttributes(hwnd, 0, 200, LWA_ALPHA);
-    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, screenWidth, screenHeight, SWP_SHOWWINDOW);
 
     // Create fonts
     gridFont = CreateFontW(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
@@ -89,7 +88,7 @@ bool Overlay::Initialize()
     UpdateWindow(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
 
-    SetTimer(hwnd, 2, 500, NULL); // Every 500ms, reassert topmost
+    std::cout << "Overlay initialized successfully." << std::endl;
 
     return true;
 }
@@ -158,8 +157,6 @@ LRESULT CALLBACK Overlay::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
         return 0;
     }
-    // case WM_ERASEBKGND:
-    //     return 1; // Prevent background erasing
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -387,7 +384,7 @@ void Overlay::ProcessKeyPress(char key, bool isAltPressed, bool isShiftPressed)
                     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
                     isShowingKeyboard = false;
                     InvalidateRect(hwnd, NULL, TRUE); // Force redraw
-                    UpdateWindow(hwnd); // Force redraw
+                    UpdateWindow(hwnd);               // Force redraw
                 }
                 return;
             }
