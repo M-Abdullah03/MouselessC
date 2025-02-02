@@ -1,6 +1,6 @@
 # Mouseless
 
-Mouseless is a C++ project that provides an overlay for keyboard-based mouse control. Inspired by the Mac Version by the same name by [croian](https://github.com/croian)
+Mouseless is a C++ project that provides an overlay for keyboard-based mouse control mainly for Windows. Inspired by the Mac Version by the same name by [croian](https://github.com/croian)
 
 ## Features
 
