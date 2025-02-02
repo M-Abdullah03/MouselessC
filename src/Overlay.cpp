@@ -18,7 +18,7 @@ std::map<std::string, std::pair<double, double>> Overlay::pairPositions;
 std::string Overlay::selectedPair;
 char Overlay::lastKeyPressed = '\0';
 bool Overlay::isShowingKeyboard = false;
-bool Overlay::isVisible = true;
+bool Overlay::isVisible = false;
 HWND Overlay::hwnd = NULL;
 HFONT Overlay::gridFont = NULL;
 HFONT Overlay::layoutFont = NULL;
@@ -84,12 +84,13 @@ bool Overlay::Initialize()
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc,
                                     GetModuleHandle(NULL), 0);
 
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
-    InvalidateRect(hwnd, NULL, TRUE);
-
+    //ShowWindow(hwnd, SW_SHOW);
+    //UpdateWindow(hwnd);
+    //InvalidateRect(hwnd, NULL, TRUE);
+    
     std::cout << "Overlay initialized successfully." << std::endl;
-
+    //Hide OVerlay
+    
     return true;
 }
 
